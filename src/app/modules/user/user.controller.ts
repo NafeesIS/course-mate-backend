@@ -4,7 +4,6 @@ import AppError from '../../errors/AppError';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserService } from './user.service';
-import { HandleUserImageUploadToAzure } from './utils/HandleUserImageUploadToAzure';
 
 const getUserInfo = catchAsync(async (req: SessionRequest, res) => {
   const userId = req.session!.getUserId();
@@ -128,31 +127,6 @@ const getUsersWithPagination = catchAsync(async (req: SessionRequest, res) => {
   });
 });
 
-const updateAdminAuthorMetaData = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  if (!userId) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Authentication required');
-  }
-  let avatarUrl: string | undefined;
-  if (req.file) {
-    const allowedTypes = ['image'];
-    const fileType = req.file.mimetype.split('/')[0];
-    if (!allowedTypes.includes(fileType)) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Only image or video files are allowed');
-    }
-
-    avatarUrl = await HandleUserImageUploadToAzure(req.file);
-  }
-  const result = await UserService.updateAdminAuthorMetaDataIntoDB(userId, req.body, avatarUrl);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'User Info updated successfully.',
-    data: result,
-  });
-});
-
 export const UserController = {
   getUserInfo,
   getUserById,
@@ -163,5 +137,4 @@ export const UserController = {
   deleteBillingDetails,
   searchUserByEmailOrPhone,
   getUsersWithPagination,
-  updateAdminAuthorMetaData,
 };
