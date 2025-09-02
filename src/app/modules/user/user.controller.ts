@@ -1,0 +1,167 @@
+import httpStatus from 'http-status';
+import { SessionRequest } from 'supertokens-node/framework/express';
+import AppError from '../../errors/AppError';
+import catchAsync from '../../utils/catchAsync';
+import sendResponse from '../../utils/sendResponse';
+import { UserService } from './user.service';
+import { HandleUserImageUploadToAzure } from './utils/HandleUserImageUploadToAzure';
+
+const getUserInfo = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const result = await UserService.getUserInfoFromST(userId);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Info fetched successfully.',
+    data: result,
+  });
+});
+
+const getUserById = catchAsync(async (req: SessionRequest, res) => {
+  const { userId } = req.params;
+  const result = await UserService.getUserById(userId);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User fetched successfully.',
+    data: result,
+  });
+});
+
+const updateUserInfo = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const result = await UserService.updateUserInfo(userId, req.body);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Info updated successfully.',
+    data: result,
+  });
+});
+
+const addBillingDetails = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const result = await UserService.addBillingDetails(userId, req.body);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Billing details added successfully.',
+    data: result,
+  });
+});
+
+const updateBillingDetails = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const { _billingDetailsId, ...updatePayload } = req.body;
+  const result = await UserService.updateBillingDetails(userId, _billingDetailsId, updatePayload);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Billing details updated successfully.',
+    data: result,
+  });
+});
+
+const getDefaultBillingDetails = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const result = await UserService.getDefaultBillingDetails(userId);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Default billing details fetched successfully.',
+    data: result,
+  });
+});
+
+const deleteBillingDetails = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  const { _billingDetailsId } = req.params;
+  const result = await UserService.deleteBillingDetails(userId, _billingDetailsId);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Billing details deleted successfully.',
+    data: result,
+  });
+});
+
+const searchUserByEmailOrPhone = catchAsync(async (req: SessionRequest, res) => {
+  const { email, phone } = req.body;
+  if (!email && !phone) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Email or phone is required');
+  }
+  const result = await UserService.searchUserByEmailOrPhone(email, phone);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User fetched successfully.',
+    data: result,
+  });
+});
+
+const getUsersWithPagination = catchAsync(async (req: SessionRequest, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const name = typeof req.query.name === 'string' ? req.query.name : undefined;
+  const email = typeof req.query.email === 'string' ? req.query.email : undefined;
+  const phone = typeof req.query.phone === 'string' ? req.query.phone : undefined;
+
+  const result = await UserService.getUsersWithPagination(Number(page), Number(limit), {
+    name,
+    email,
+    phone,
+  });
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Users fetched successfully.',
+    data: result,
+  });
+});
+
+const updateAdminAuthorMetaData = catchAsync(async (req: SessionRequest, res) => {
+  const userId = req.session!.getUserId();
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Authentication required');
+  }
+  let avatarUrl: string | undefined;
+  if (req.file) {
+    const allowedTypes = ['image'];
+    const fileType = req.file.mimetype.split('/')[0];
+    if (!allowedTypes.includes(fileType)) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Only image or video files are allowed');
+    }
+
+    avatarUrl = await HandleUserImageUploadToAzure(req.file);
+  }
+  const result = await UserService.updateAdminAuthorMetaDataIntoDB(userId, req.body, avatarUrl);
+
+  return sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Info updated successfully.',
+    data: result,
+  });
+});
+
+export const UserController = {
+  getUserInfo,
+  getUserById,
+  updateUserInfo,
+  addBillingDetails,
+  updateBillingDetails,
+  getDefaultBillingDetails,
+  deleteBillingDetails,
+  searchUserByEmailOrPhone,
+  getUsersWithPagination,
+  updateAdminAuthorMetaData,
+};

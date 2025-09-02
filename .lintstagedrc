@@ -1,0 +1,6 @@
+{
+  "*.(js|ts)": [
+    "npm run prettier:fix",
+    "npm run lint"
+  ]
+}
