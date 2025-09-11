@@ -19,33 +19,30 @@ supertokens.init({
     websiteBasePath: "/auth",
   },
   recipeList: [
+    // Email Password
     EmailPassword.init({
       override: {
         apis: (originalImplementation) => {
           return {
             ...originalImplementation,
             signUpPOST: async function (input) {
-              if (originalImplementation.signUpPOST === undefined) {
-                throw Error("Should never come here");
-              }
-
-              let response = await originalImplementation.signUpPOST(input);
-
+              let response = await originalImplementation.signUpPOST!(input);
               if (response.status === "OK") {
-                // Create user in our database
+                // Save to database
                 await UserModel.create({
-                  email: response.user.emails,
+                  email: response.user.emails[0],
                   supertokensId: response.user.id,
                   role: "user",
                 });
               }
-
               return response;
             },
           };
         },
       },
     }),
+    
+    // Google
     ThirdParty.init({
       signInAndUpFeature: {
         providers: [
@@ -67,29 +64,22 @@ supertokens.init({
           return {
             ...originalImplementation,
             signInUpPOST: async function (input) {
-              if (originalImplementation.signInUpPOST === undefined) {
-                throw Error("Should never come here");
+              let response = await originalImplementation.signInUpPOST!(input);
+              if (response.status === "OK" && response.createdNewRecipeUser) {
+                // Save to database
+                await UserModel.create({
+                  email: response.user.emails[0],
+                  supertokensId: response.user.id,
+                  role: "user",
+                });
               }
-
-              let response = await originalImplementation.signInUpPOST(input);
-
-              if (response.status === "OK") {
-                if (response.createdNewRecipeUser) {
-                  // Create user in our database
-                  await UserModel.create({
-                    email: response.user.emails,
-                    supertokensId: response.user.id,
-                    role: "user",
-                  });
-                }
-              }
-
               return response;
             },
           };
         },
       },
     }),
+    
     Session.init(),
   ],
 });
