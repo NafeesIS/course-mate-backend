@@ -3,6 +3,7 @@ import Session from "supertokens-node/recipe/session";
 import EmailPassword from "supertokens-node/recipe/emailpassword";
 import ThirdParty from "supertokens-node/recipe/thirdparty";
 import config from "./index";
+import { UserModel } from "../modules/user/user.model";
 
 supertokens.init({
   framework: "express",
@@ -12,14 +13,39 @@ supertokens.init({
   },
   appInfo: {
     appName: "Course Mate",
-    apiDomain: `http://localhost:${config.port}`,   // backend API
-    websiteDomain: "http://localhost:3000",        // frontend
+    apiDomain: `http://localhost:${config.port}`,
+    websiteDomain: "http://localhost:3000",
     apiBasePath: "/auth",
     websiteBasePath: "/auth",
   },
   recipeList: [
-    EmailPassword.init(),
-    Session.init(),
+    EmailPassword.init({
+      override: {
+        apis: (originalImplementation) => {
+          return {
+            ...originalImplementation,
+            signUpPOST: async function (input) {
+              if (originalImplementation.signUpPOST === undefined) {
+                throw Error("Should never come here");
+              }
+
+              let response = await originalImplementation.signUpPOST(input);
+
+              if (response.status === "OK") {
+                // Create user in our database
+                await UserModel.create({
+                  email: response.user.emails,
+                  supertokensId: response.user.id,
+                  role: "user",
+                });
+              }
+
+              return response;
+            },
+          };
+        },
+      },
+    }),
     ThirdParty.init({
       signInAndUpFeature: {
         providers: [
@@ -28,14 +54,42 @@ supertokens.init({
               thirdPartyId: "google",
               clients: [
                 {
-                  clientId: '553517449908-b6aqmrhu7gs034lc6cg3931tfo0c9njb.apps.googleusercontent.com',
-                  clientSecret: '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',
+                  clientId: config.google_client_id!,
+                  clientSecret: config.google_client_secret!,
                 },
               ],
             },
           },
         ],
       },
+      override: {
+        apis: (originalImplementation) => {
+          return {
+            ...originalImplementation,
+            signInUpPOST: async function (input) {
+              if (originalImplementation.signInUpPOST === undefined) {
+                throw Error("Should never come here");
+              }
+
+              let response = await originalImplementation.signInUpPOST(input);
+
+              if (response.status === "OK") {
+                if (response.createdNewRecipeUser) {
+                  // Create user in our database
+                  await UserModel.create({
+                    email: response.user.emails,
+                    supertokensId: response.user.id,
+                    role: "user",
+                  });
+                }
+              }
+
+              return response;
+            },
+          };
+        },
+      },
     }),
+    Session.init(),
   ],
 });
