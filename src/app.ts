@@ -22,12 +22,7 @@ app.use(middleware());
 
 // Routes
 // in src/app.ts or src/server.ts
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Course Mate backend is running 🚀",
-  });
-});
+app.use('', router);
 
 
 // Error handling

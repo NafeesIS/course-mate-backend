@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifySession } from "supertokens-node/recipe/session/framework/express";
-import { getMe } from "./auth.controller";
+import { createUser, getMe } from "./auth.controller";
 
 const router = Router();
 
@@ -8,5 +8,6 @@ const router = Router();
 
 // Custom protected route
 router.get("/me", verifySession(), getMe);
+router.post("/", verifySession(), createUser);
 
 export const AuthRoutes = router;
