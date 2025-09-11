@@ -1,18 +1,23 @@
-import { Router } from 'express';
-import { UserRoutes } from '../modules/user/user.route';
+import { Router } from "express";
+import { AuthRoutes } from "../modules/auth/auth.route";
+import { UserRoutes } from "../modules/user/user.route";
+// Later we’ll add CourseRoutes, ModuleRoutes, LectureRoutes
 
 const router = Router();
 
-//add new route in here
 const moduleRoutes = [
   {
-    path: '/users',
+    path: "/auth",
+    route: AuthRoutes,
+  },
+  {
+    path: "/users",
     route: UserRoutes,
   },
 ];
 
-moduleRoutes.forEach(route => {
-  router.use(route.path, route.route);
+moduleRoutes.forEach((r) => {
+  router.use(r.path, r.route);
 });
 
 export default router;

@@ -1,7 +1,7 @@
-import { Server } from 'http';
-import mongoose from 'mongoose';
-import app from './app';
-import config from './app/config';
+import { Server } from "http";
+import mongoose from "mongoose";
+import app from "./app";
+import config from "./app/config";
 
 let server: Server;
 
@@ -9,35 +9,31 @@ async function main() {
   try {
     // Connect to the database
     await mongoose.connect(config.database_url as string);
-    // If the database connection is successful, log a message
-    console.log('Connected to the database');
+    console.log("✅ Connected to the database");
 
     // Start the application server
     server = app.listen(config.port, () => {
-      console.log(`Filesure server listening on port ${config.port}`);
+      console.log(`🚀 Server running on port ${config.port}`);
     });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error starting server:", err);
+    process.exit(1);
   }
 }
 
 main();
 
-process.on('unhandledRejection', err => {
-  console.log('😈 Unhandled rejection is detected. Exiting...', err);
-  // Attempt to gracefully shut down the server if it's running
+// Handle unexpected errors gracefully
+process.on("unhandledRejection", (err) => {
+  console.error("😈 Unhandled rejection detected. Shutting down...", err);
   if (server) {
-    console.log('🚪 Server shut down successfully.');
-    server.close(() => {
-      process.exit(1);
-    });
+    server.close(() => process.exit(1));
   } else {
-    process.exit(1); // Exit immediately if the server isn't running
+    process.exit(1);
   }
 });
 
-process.on('uncaughtException', err => {
-  console.log('😈 Uncaught exception is detected. Shutting down ...', err);
-  console.log('🚪 Server shut down successfully.');
+process.on("uncaughtException", (err) => {
+  console.error("😈 Uncaught exception detected. Shutting down...", err);
   process.exit(1);
 });

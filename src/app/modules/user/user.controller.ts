@@ -1,140 +1,56 @@
-import httpStatus from 'http-status';
-import { SessionRequest } from 'supertokens-node/framework/express';
-import AppError from '../../errors/AppError';
-import catchAsync from '../../utils/catchAsync';
-import sendResponse from '../../utils/sendResponse';
-import { UserService } from './user.service';
+import { Request, Response } from "express";
+import * as UserService from "./user.service";
 
-const getUserInfo = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const result = await UserService.getUserInfoFromST(userId);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'User Info fetched successfully.',
-    data: result,
-  });
-});
-
-const getUserById = catchAsync(async (req: SessionRequest, res) => {
-  const { userId } = req.params;
-  const result = await UserService.getUserById(userId);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'User fetched successfully.',
-    data: result,
-  });
-});
-
-const updateUserInfo = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const result = await UserService.updateUserInfo(userId, req.body);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'User Info updated successfully.',
-    data: result,
-  });
-});
-
-const addBillingDetails = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const result = await UserService.addBillingDetails(userId, req.body);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Billing details added successfully.',
-    data: result,
-  });
-});
-
-const updateBillingDetails = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const { _billingDetailsId, ...updatePayload } = req.body;
-  const result = await UserService.updateBillingDetails(userId, _billingDetailsId, updatePayload);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Billing details updated successfully.',
-    data: result,
-  });
-});
-
-const getDefaultBillingDetails = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const result = await UserService.getDefaultBillingDetails(userId);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Default billing details fetched successfully.',
-    data: result,
-  });
-});
-
-const deleteBillingDetails = catchAsync(async (req: SessionRequest, res) => {
-  const userId = req.session!.getUserId();
-  const { _billingDetailsId } = req.params;
-  const result = await UserService.deleteBillingDetails(userId, _billingDetailsId);
-
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Billing details deleted successfully.',
-    data: result,
-  });
-});
-
-const searchUserByEmailOrPhone = catchAsync(async (req: SessionRequest, res) => {
-  const { email, phone } = req.body;
-  if (!email && !phone) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Email or phone is required');
+/**
+ * Get all users
+ */
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await UserService.getAllUsers();
+    res.json({ success: true, data: users });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
   }
-  const result = await UserService.searchUserByEmailOrPhone(email, phone);
+};
 
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'User fetched successfully.',
-    data: result,
-  });
-});
+/**
+ * Get a single user
+ */
+export const getUser = async (req: Request, res: Response) => {
+  try {
+    const user = await UserService.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-const getUsersWithPagination = catchAsync(async (req: SessionRequest, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const name = typeof req.query.name === 'string' ? req.query.name : undefined;
-  const email = typeof req.query.email === 'string' ? req.query.email : undefined;
-  const phone = typeof req.query.phone === 'string' ? req.query.phone : undefined;
+    res.json({ success: true, data: user });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-  const result = await UserService.getUsersWithPagination(Number(page), Number(limit), {
-    name,
-    email,
-    phone,
-  });
+/**
+ * Update a user
+ */
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const user = await UserService.updateUser(req.params.id, req.body);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Users fetched successfully.',
-    data: result,
-  });
-});
+    res.json({ success: true, data: user });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-export const UserController = {
-  getUserInfo,
-  getUserById,
-  updateUserInfo,
-  addBillingDetails,
-  updateBillingDetails,
-  getDefaultBillingDetails,
-  deleteBillingDetails,
-  searchUserByEmailOrPhone,
-  getUsersWithPagination,
+/**
+ * Delete a user
+ */
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const user = await UserService.deleteUser(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
