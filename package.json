@@ -1,0 +1,49 @@
+{
+  "name": "course-mate-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "prestart": "npm install && npm run build",
+    "start": "node ./dist/server.js",
+    "start:prod": "npm run start",
+    "start:dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "lint": "eslint src --ignore-path .eslintignore --ext .ts",
+    "lint:fix": "npx eslint src --fix",
+    "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
+    "prettier:fix": "npx prettier --write src",
+    "prepare": "if [ \"$NODE_ENV\" = \"development\" ]; then husky install; fi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NafeesIS/course-mate-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NafeesIS/course-mate-backend/issues"
+  },
+  "homepage": "https://github.com/NafeesIS/course-mate-backend#readme",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "http-status": "^2.1.0",
+    "mongoose": "^8.18.1",
+    "supertokens-auth-react": "^0.50.0",
+    "supertokens-node": "^23.0.1",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  }
+}
