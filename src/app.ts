@@ -1,25 +1,32 @@
 import express, { Application } from "express";
 import cors from "cors";
 import { middleware, errorHandler as supertokensErrorHandler } from "supertokens-node/framework/express";
-import "../src/app/config/supertokens.ts";
+import * as supertokens from "supertokens-node";  // Add this import
+import "./app/config/supertokens";  // Ensure this is configured properly
 import router from "./app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandlers";
 
 const app: Application = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json()); // replaces body-parser
+// CORS configuration
+app.use(cors({
+  origin: "http://localhost:3000",
+  allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
+  credentials: true,
+}));
+
+app.use(express.json());
 
 // Supertokens middleware
 app.use(middleware());
 
 // Routes
-app.use("/", router);
+// in src/app.ts or src/server.ts
+app.use('', router);
+
 
 // Error handling
 app.use(supertokensErrorHandler());
-//global error handler
 app.use(globalErrorHandler);
 
 export default app;
