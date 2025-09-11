@@ -1,4 +1,5 @@
-import { UserModel, IUser } from "./user.model";
+import { IUser } from "./user.interface";
+import { UserModel } from "./user.model";
 
 /**
  * Create a new user

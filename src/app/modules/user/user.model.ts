@@ -1,11 +1,5 @@
-import { Schema, model, Document } from "mongoose";
-
-export interface IUser extends Document {
-  email: string;
-  supertokensId: string;
-  role: "admin" | "user";
-  createdAt: Date;
-}
+import { Schema, model } from "mongoose";
+import { IUser } from "./user.interface";
 
 const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
