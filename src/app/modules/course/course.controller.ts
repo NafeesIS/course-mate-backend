@@ -15,10 +15,15 @@ export const createCourse = catchAsync(async (req: SessionRequest, res: Response
   let courseData = { ...req.body };
   
   // Handle thumbnail file upload
-  if (req.file && req.file.fieldname === 'thumbnail') {
-    courseData.thumbnail = getFileUrl(req, req.file.path);
-  }
-  
+if (req.file) {
+  courseData.thumbnail = await uploadToGoogleDrive(req.file, 'course-thumbnails');
+}
+
+// Option 2: Local storage with proper URL construction
+if (req.file) {
+  courseData.thumbnail = getFileUrl(req, req.file.path);
+}
+
   const result = await CourseServices.createCourseIntoDB(courseData, userId);
   
   sendResponse(res, {
