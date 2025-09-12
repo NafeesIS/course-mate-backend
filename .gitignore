@@ -1,4 +1,5 @@
-node_modules
-dist
+# Ignore environment files
 .env
-.DS_Store
+
+# Ignore dependencies
+node_modules/
