@@ -1,4 +1,3 @@
-// src/app/modules/course/module.controller.ts
 import { Request, Response } from "express";
 import httpStatus from "http-status";
 import { SessionRequest } from "supertokens-node/framework/express";
@@ -9,7 +8,14 @@ import sendResponse from "../../utils/sendResponse";
 // Create Module
 export const createModule = catchAsync(async (req: SessionRequest, res: Response) => {
   const userId = req.session!.getUserId();
-  const result = await ModuleServices.createModuleIntoDB(req.body, userId);
+  const { courseId } = req.params;
+  
+  const moduleData = {
+    ...req.body,
+    courseId
+  };
+  
+  const result = await ModuleServices.createModuleIntoDB(moduleData, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -19,15 +25,50 @@ export const createModule = catchAsync(async (req: SessionRequest, res: Response
   });
 });
 
-// Get Modules by Course
-export const getModulesByCourse = catchAsync(async (req: Request, res: Response) => {
+// Get Modules by Course (public with optional user context)
+export const getModulesByCourse = catchAsync(async (req: SessionRequest | Request, res: Response) => {
   const { courseId } = req.params;
-  const result = await ModuleServices.getModulesByCourseFromDB(courseId);
+  
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
+  }
+  
+  const result = await ModuleServices.getModulesByCourseFromDB(courseId, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Modules retrieved successfully',
+    data: result,
+  });
+});
+
+// Get Single Module (public with optional user context)
+export const getSingleModule = catchAsync(async (req: SessionRequest | Request, res: Response) => {
+  const { id } = req.params;
+  
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
+  }
+  
+  const result = await ModuleServices.getSingleModuleFromDB(id, userId);
+  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Module retrieved successfully',
     data: result,
   });
 });
@@ -60,3 +101,18 @@ export const deleteModule = catchAsync(async (req: SessionRequest, res: Response
   });
 });
 
+// Reorder Modules
+export const reorderModules = catchAsync(async (req: SessionRequest, res: Response) => {
+  const { courseId } = req.params;
+  const { moduleOrders } = req.body; // Array of {moduleId, moduleNumber}
+  const userId = req.session!.getUserId();
+  
+  const result = await ModuleServices.reorderModulesInDB(courseId, moduleOrders, userId);
+  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Modules reordered successfully',
+    data: result,
+  });
+});

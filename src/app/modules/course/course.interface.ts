@@ -1,4 +1,3 @@
-// src/app/modules/course/course.interface.ts
 import { Types } from "mongoose";
 
 export interface ICourse {
@@ -6,16 +5,29 @@ export interface ICourse {
   description: string;
   price: number;
   thumbnail: string;
-  createdBy: Types.ObjectId; // reference to User
+  createdBy: string; // SuperTokens user ID
+  isActive: boolean;
 }
 
-
 export interface IUserProgress {
-  userId: Types.ObjectId; // reference to User
+  userId: string; // SuperTokens user ID
   courseId: Types.ObjectId; // reference to Course
   currentLecture?: Types.ObjectId; // reference to Lecture
   progressPercentage: number;
   completedLectures: Types.ObjectId[]; // array of Lecture references
   enrolledAt: Date;
   lastAccessed?: Date;
+  isCompleted: boolean;
 }
+
+export interface ICourseWithProgress extends ICourse {
+  modules?: any[];
+  userProgress?: IUserProgress;
+  totalLectures?: number;
+  completedLectures?: number;
+}
+
+export type CourseWithProgress = ICourse & {
+  userProgress?: IUserProgress | null;
+  isEnrolled: boolean;
+};

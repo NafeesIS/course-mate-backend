@@ -17,4 +17,10 @@ export default {
   // Google OAuth
   google_client_id: process.env.GOOGLE_CLIENT_ID,
   google_client_secret: process.env.GOOGLE_CLIENT_SECRET,
+
+  // Google Drive Upload
+  google_drive_client_id: process.env.GOOGLE_DRIVE_CLIENT_ID,
+  google_drive_client_secret: process.env.GOOGLE_DRIVE_CLIENT_SECRET,
+  google_drive_refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN,
+  google_drive_folder_id: process.env.GOOGLE_DRIVE_FOLDER_ID,
 };

@@ -1,4 +1,3 @@
-// src/app/modules/course/course.controller.ts
 import { Request, Response } from "express";
 import httpStatus from "http-status";
 import { SessionRequest } from "supertokens-node/framework/express";
@@ -6,13 +5,21 @@ import { CourseServices } from "./course.service";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import AppError from "../../errors/AppError";
+import { uploadToGoogleDrive } from "../../utils/googleDriveUpload";
+import { getFileUrl } from "../../utils/fileUpload";
+// import { getFileUrl } from "../../utils/fileUpload";
 
 // Create a new course
 export const createCourse = catchAsync(async (req: SessionRequest, res: Response) => {
   const userId = req.session!.getUserId();
-  const courseData = { ...req.body, createdBy: userId };
+  let courseData = { ...req.body };
   
-  const result = await CourseServices.createCourseIntoDB(courseData);
+  // Handle thumbnail file upload
+  if (req.file && req.file.fieldname === 'thumbnail') {
+    courseData.thumbnail = getFileUrl(req, req.file.path);
+  }
+  
+  const result = await CourseServices.createCourseIntoDB(courseData, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -22,9 +29,19 @@ export const createCourse = catchAsync(async (req: SessionRequest, res: Response
   });
 });
 
-// Get all courses
-export const getAllCourses = catchAsync(async (req: Request, res: Response) => {
-  const result = await CourseServices.getAllCoursesFromDB(req.query);
+// Get all courses (public route with optional user context)
+export const getAllCourses = catchAsync(async (req: SessionRequest | Request, res: Response) => {
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
+  }
+  
+  const result = await CourseServices.getAllCoursesFromDB(req.query, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -34,14 +51,21 @@ export const getAllCourses = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// Get single course
-export const getSingleCourse = catchAsync(async (req: Request, res: Response) => {
+// Get single course (public route with optional user context)
+export const getSingleCourse = catchAsync(async (req: SessionRequest | Request, res: Response) => {
   const { id } = req.params;
-  const result = await CourseServices.getSingleCourseFromDB(id);
   
-  if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Course not found');
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
   }
+  
+  const result = await CourseServices.getSingleCourseFromDB(id, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -51,12 +75,18 @@ export const getSingleCourse = catchAsync(async (req: Request, res: Response) =>
   });
 });
 
-// Update course
+// Update course (protected)
 export const updateCourse = catchAsync(async (req: SessionRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.session!.getUserId();
+  let updateData = { ...req.body };
   
-  const result = await CourseServices.updateCourseIntoDB(id, req.body, userId);
+  // Handle thumbnail file upload to Google Drive
+  if (req.file && req.file.fieldname === 'thumbnail') {
+    updateData.thumbnail = await uploadToGoogleDrive(req.file, 'course-thumbnails');
+  }
+  
+  const result = await CourseServices.updateCourseIntoDB(id, updateData, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -66,7 +96,7 @@ export const updateCourse = catchAsync(async (req: SessionRequest, res: Response
   });
 });
 
-// Delete course
+// Delete course (protected)
 export const deleteCourse = catchAsync(async (req: SessionRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.session!.getUserId();
@@ -81,7 +111,7 @@ export const deleteCourse = catchAsync(async (req: SessionRequest, res: Response
   });
 });
 
-// Get user's enrolled courses
+// Get user's enrolled courses (protected)
 export const getEnrolledCourses = catchAsync(async (req: SessionRequest, res: Response) => {
   const userId = req.session!.getUserId();
   const result = await CourseServices.getEnrolledCoursesFromDB(userId);
@@ -94,7 +124,7 @@ export const getEnrolledCourses = catchAsync(async (req: SessionRequest, res: Re
   });
 });
 
-// Enroll in a course
+// Enroll in a course (protected)
 export const enrollCourse = catchAsync(async (req: SessionRequest, res: Response) => {
   const { courseId } = req.params;
   const userId = req.session!.getUserId();
@@ -105,6 +135,19 @@ export const enrollCourse = catchAsync(async (req: SessionRequest, res: Response
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Successfully enrolled in course',
+    data: result,
+  });
+});
+
+// Get courses created by user (admin only)
+export const getMyCourses = catchAsync(async (req: SessionRequest, res: Response) => {
+  const userId = req.session!.getUserId();
+  const result = await CourseServices.getCoursesCreatedByUser(userId);
+  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Created courses retrieved successfully',
     data: result,
   });
 });

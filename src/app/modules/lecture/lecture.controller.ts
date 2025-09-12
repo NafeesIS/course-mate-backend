@@ -1,15 +1,24 @@
-// src/app/modules/course/lecture.controller.ts
 import { LectureServices } from "./lecture.service";
 import { SessionRequest } from "supertokens-node/framework/express";
 import { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import httpStatus from "http-status";
+import { getFileUrl } from "../../utils/fileUpload";
+
 
 // Create Lecture
 export const createLecture = catchAsync(async (req: SessionRequest, res: Response) => {
   const userId = req.session!.getUserId();
-  const result = await LectureServices.createLectureIntoDB(req.body, userId);
+  let lectureData = { ...req.body };
+  
+  // Handle PDF file uploads
+  if (req.files && Array.isArray(req.files)) {
+    const pdfFiles = req.files.filter(file => file.fieldname === 'pdfNotes');
+    lectureData.pdfNotes = pdfFiles.map(file => getFileUrl(req, file.path));
+  }
+  
+  const result = await LectureServices.createLectureIntoDB(lectureData, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -19,15 +28,50 @@ export const createLecture = catchAsync(async (req: SessionRequest, res: Respons
   });
 });
 
-// Get Lectures by Module
-export const getLecturesByModule = catchAsync(async (req: Request, res: Response) => {
+// Get Lectures by Module (with optional user context)
+export const getLecturesByModule = catchAsync(async (req: SessionRequest | Request, res: Response) => {
   const { moduleId } = req.params;
-  const result = await LectureServices.getLecturesByModuleFromDB(moduleId);
+  
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
+  }
+  
+  const result = await LectureServices.getLecturesByModuleFromDB(moduleId, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Lectures retrieved successfully',
+    data: result,
+  });
+});
+
+// Get Single Lecture (with optional user context)
+export const getSingleLecture = catchAsync(async (req: SessionRequest | Request, res: Response) => {
+  const { id } = req.params;
+  
+  // Check if request has session (optional authentication)
+  let userId = undefined;
+  try {
+    if ('session' in req && req.session) {
+      userId = req.session.getUserId();
+    }
+  } catch (error) {
+    // Session not available, continue without user context
+  }
+  
+  const result = await LectureServices.getSingleLectureFromDB(id, userId);
+  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Lecture retrieved successfully',
     data: result,
   });
 });
@@ -48,7 +92,17 @@ export const getAllLectures = catchAsync(async (req: Request, res: Response) => 
 export const updateLecture = catchAsync(async (req: SessionRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.session!.getUserId();
-  const result = await LectureServices.updateLectureIntoDB(id, req.body, userId);
+  let updateData = { ...req.body };
+  
+  // Handle PDF file uploads
+  if (req.files && Array.isArray(req.files)) {
+    const pdfFiles = req.files.filter(file => file.fieldname === 'pdfNotes');
+    if (pdfFiles.length > 0) {
+      updateData.pdfNotes = pdfFiles.map(file => getFileUrl(req, file.path));
+    }
+  }
+  
+  const result = await LectureServices.updateLectureIntoDB(id, updateData, userId);
   
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -86,7 +140,7 @@ export const markLectureComplete = catchAsync(async (req: SessionRequest, res: R
   });
 });
 
-// Get User Progress
+// Get User Progress for a Course
 export const getUserProgress = catchAsync(async (req: SessionRequest, res: Response) => {
   const { courseId } = req.params;
   const userId = req.session!.getUserId();

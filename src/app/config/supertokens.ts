@@ -2,8 +2,11 @@ import supertokens from "supertokens-node";
 import Session from "supertokens-node/recipe/session";
 import EmailPassword from "supertokens-node/recipe/emailpassword";
 import ThirdParty from "supertokens-node/recipe/thirdparty";
+import UserRoles from "supertokens-node/recipe/userroles";
+import EmailVerification from "supertokens-node/recipe/emailverification";
 import config from "./index";
-import { UserModel } from "../modules/user/user.model";
+import saveUserData from "../utils/saveUserData";
+import { addRoleToUser } from "../utils/superTokenHelper";
 
 supertokens.init({
   framework: "express",
@@ -19,22 +22,41 @@ supertokens.init({
     websiteBasePath: "/auth",
   },
   recipeList: [
+    // User Roles
+    UserRoles.init(),
+    
+    // Email Verification
+    EmailVerification.init({
+      mode: 'REQUIRED',
+    }),
+    
     // Email Password
     EmailPassword.init({
       override: {
-        apis: (originalImplementation) => {
+        functions: (originalImplementation) => {
           return {
             ...originalImplementation,
-            signUpPOST: async function (input) {
-              let response = await originalImplementation.signUpPOST!(input);
+            signUp: async function (input) {
+              const response = await originalImplementation.signUp(input);
+              
               if (response.status === "OK") {
+                // Add default user role
+                await addRoleToUser(response.user.id, 'user');
+                
                 // Save to database
-                await UserModel.create({
-                  email: response.user.emails[0],
-                  supertokensId: response.user.id,
-                  role: "user",
-                });
+                await saveUserData(response.user, {}, false);
               }
+              
+              return response;
+            },
+            signIn: async function (input) {
+              const response = await originalImplementation.signIn(input);
+              
+              if (response.status === "OK") {
+                // Update last login and save user data
+                await saveUserData(response.user, {}, response.user.emails[0]);
+              }
+              
               return response;
             },
           };
@@ -42,7 +64,7 @@ supertokens.init({
       },
     }),
     
-    // Google
+    // Google OAuth
     ThirdParty.init({
       signInAndUpFeature: {
         providers: [
@@ -60,19 +82,22 @@ supertokens.init({
         ],
       },
       override: {
-        apis: (originalImplementation) => {
+        functions: (originalImplementation) => {
           return {
             ...originalImplementation,
-            signInUpPOST: async function (input) {
-              let response = await originalImplementation.signInUpPOST!(input);
-              if (response.status === "OK" && response.createdNewRecipeUser) {
-                // Save to database
-                await UserModel.create({
-                  email: response.user.emails[0],
-                  supertokensId: response.user.id,
-                  role: "user",
-                });
+            signInUp: async function (input) {
+              const response = await originalImplementation.signInUp(input);
+              
+              if (response.status === "OK") {
+                // Add default user role for new users
+                if (response.createdNewRecipeUser) {
+                  await addRoleToUser(response.user.id, 'user');
+                }
+                
+                // Save to database with raw user info from provider
+                await saveUserData(response.user, response.rawUserInfoFromProvider, true);
               }
+              
               return response;
             },
           };
@@ -80,6 +105,8 @@ supertokens.init({
       },
     }),
     
-    Session.init(),
+    Session.init({
+      cookieSecure: config.NODE_ENV === 'production',
+    }),
   ],
 });
