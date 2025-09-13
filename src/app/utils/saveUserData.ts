@@ -24,18 +24,6 @@ const saveUserData = async (userData: any, rawUserInfo?: any, isVerified?: any) 
       mobileNumber: userData.phoneNumbers?.[0] || '',
     };
 
-    const defaultBillingDetails = {
-      firstName: meta_data.firstName || rawUserInfo?.fromUserInfoAPI?.given_name || '',
-      lastName: meta_data.lastName || rawUserInfo?.fromUserInfoAPI?.family_name || '',
-      email: userData.emails[0] || '',
-      mobileNumber: meta_data.mobileNumber || userData.phoneNumbers[0] || '',
-      isDefault: true,
-      billingType: 'personal' as const,
-      zipCode: '',
-      country: '',
-      state: '',
-    };
-
     const user: Partial<IUser> = {
       uId: userData.id,
       meta_data: meta_data,
@@ -58,10 +46,6 @@ const saveUserData = async (userData: any, rawUserInfo?: any, isVerified?: any) 
       emailVerified: emailVerified,
       profilePicture: profilePicture,
       roles,
-      billingDetails:
-        existingUser?.billingDetails && existingUser?.billingDetails.length !== 0
-          ? existingUser.billingDetails
-          : [defaultBillingDetails],
       lastLogin: new Date(),
     };
 

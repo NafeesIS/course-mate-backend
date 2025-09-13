@@ -13,20 +13,6 @@ export interface ILoginMethod {
     userId: string;
   };
 }
-
-export interface IBillingDetails {
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobileNumber: string;
-  zipCode: string;
-  country: string;
-  state: string;
-  isDefault: boolean;
-  billingType: 'personal' | 'business';
-  _id?: Types.ObjectId;
-}
-
 export interface IMetaData {
   firstName?: string;
   lastName?: string;
@@ -53,7 +39,6 @@ export interface IUser extends Document {
   emailVerified: boolean;
   profilePicture?: string;
   roles: string[];
-  billingDetails: IBillingDetails[];
   lastLogin: Date;
   createdAt: Date;
   updatedAt: Date;

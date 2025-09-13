@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { IUser, ILoginMethod, IBillingDetails, IMetaData, IThirdParty } from "./user.interface";
+import { IUser, ILoginMethod, IMetaData, IThirdParty } from "./user.interface";
 
 const metaDataSchema = new Schema<IMetaData>({
   firstName: { type: String },
@@ -23,18 +23,6 @@ const loginMethodSchema = new Schema<ILoginMethod>({
   thirdParty: thirdPartySchema,
 }, { _id: false });
 
-const billingDetailsSchema = new Schema<IBillingDetails>({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true },
-  mobileNumber: { type: String, required: true },
-  zipCode: { type: String, required: true },
-  country: { type: String, required: true },
-  state: { type: String, required: true },
-  isDefault: { type: Boolean, required: true },
-  billingType: { type: String, enum: ['personal', 'business'], required: true },
-}, { _id: true });
-
 const userSchema = new Schema<IUser>({
   uId: { type: String, required: true, unique: true },
   meta_data: { type: metaDataSchema, default: {} },
@@ -48,7 +36,6 @@ const userSchema = new Schema<IUser>({
   emailVerified: { type: Boolean, default: false },
   profilePicture: { type: String },
   roles: [{ type: String }],
-  billingDetails: [billingDetailsSchema],
   lastLogin: { type: Date, default: Date.now },
 }, {
   timestamps: true
