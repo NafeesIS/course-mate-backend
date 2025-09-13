@@ -11,11 +11,21 @@ import notFound from "./app/middlewares/notFound";
 const app: Application = express();
 
 // CORS configuration
-app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"], // Add multiple frontend URLs if needed
-  allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
-  credentials: true,
-}));
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000", // for local dev
+      "https://course-mate-frontend.vercel.app", // your production frontend
+    ],
+    allowedHeaders: [
+      "content-type",
+      ...supertokens.getAllCORSHeaders(), // required by SuperTokens
+    ],
+    credentials: true, // allow cookies/headers for auth
+  })
+);
+
 
 // Body parsing middleware
 app.use(express.json({ limit: '50mb' }));
