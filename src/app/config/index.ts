@@ -9,6 +9,8 @@ export default {
 
   // Database
   database_url: process.env.DATABASE_URL,
+  apiDomain: process.env.API_DOMAIN || 'http://localhost:4000',
+  websiteDomain: process.env.WEBSITE_DOMAIN || 'http://localhost:3000',
 
   // Supertokens
   supertoken_connection_URI: process.env.SUPERTOKEN_CONNECTION_URI,

@@ -16,8 +16,8 @@ supertokens.init({
   },
   appInfo: {
     appName: "Course Mate",
-    apiDomain: `http://localhost:${config.port}`,
-    websiteDomain: "http://localhost:3000",
+    apiDomain: config.apiDomain,
+    websiteDomain: config.websiteDomain,
     apiBasePath: "/auth",
     websiteBasePath: "/auth",
   },
