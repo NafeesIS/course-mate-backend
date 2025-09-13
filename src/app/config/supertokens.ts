@@ -27,7 +27,7 @@ supertokens.init({
     
     // Email Verification
     EmailVerification.init({
-      mode: 'REQUIRED',
+      mode: 'OPTIONAL',
     }),
     
     // Email Password
@@ -53,8 +53,16 @@ supertokens.init({
               const response = await originalImplementation.signIn(input);
               
               if (response.status === "OK") {
-                // Update last login and save user data
-                await saveUserData(response.user, {}, response.user.emails[0]);
+                let isEmailVerified = false;
+                try {
+                  isEmailVerified = await EmailVerification.isEmailVerified(response.recipeUserId);
+                } catch (error) {
+                  console.log("Could not check email verification status:", error);
+                  isEmailVerified = false; // Default to false if check fails
+                }
+                
+                // Update last login and save user data with proper boolean value
+                await saveUserData(response.user, {}, isEmailVerified);
               }
               
               return response;

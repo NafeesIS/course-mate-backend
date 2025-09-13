@@ -42,8 +42,8 @@ const userSchema = new Schema<IUser>({
 });
 
 // Create indexes for faster queries
-userSchema.index({ uId: 1 });
-userSchema.index({ "emails": 1 });
+// userSchema.index({ uId: 1 });
+// userSchema.index({ "emails": 1 });
 userSchema.index({ "roles": 1 });
 
 export const UserModel = model<IUser>("User", userSchema);
