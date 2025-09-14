@@ -1,12 +1,16 @@
 import express, { Application } from "express";
 import cors from "cors";
 import path from "path";
-import { middleware, errorHandler as supertokensErrorHandler } from "supertokens-node/framework/express";
+import {
+  middleware,
+  errorHandler as supertokensErrorHandler,
+} from "supertokens-node/framework/express";
 import * as supertokens from "supertokens-node";
 import "./app/config/supertokens";
 import router from "./app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandlers";
 import notFound from "./app/middlewares/notFound";
+import mongoose from "mongoose";
 
 const app: Application = express();
 
@@ -26,27 +30,42 @@ app.use(
   })
 );
 
-
 // Body parsing middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Static file serving for uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // SuperTokens middleware
 app.use(middleware());
 
 // Routes
-app.use('/api/v1', router);
+app.use("/api/v1", router);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    success: true, 
-    message: 'Course Mate API is running successfully!',
-    timestamp: new Date().toISOString()
-  });
+app.get("/", async (req, res) => {
+  try {
+    // Check if MongoDB is connected
+    await mongoose.connection.db.admin().ping();
+
+    // Respond with success message if both API and database are up
+    res.status(200).json({
+      success: true,
+      message:
+        "Course Mate API is running successfully and the database is connected!",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    // Respond with error if database connection fails
+    res.status(500).json({
+      success: false,
+      message:
+        "API is running, but there is an issue with the database connection",
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Handle 404 routes
