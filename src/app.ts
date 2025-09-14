@@ -38,11 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // Static file serving for uploads
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// SuperTokens middleware
-app.use(middleware());
 
-// Routes
-app.use("/api/v1", router);
 
 // Health check endpoint
 app.get("/", async (req, res) => {
@@ -67,7 +63,10 @@ app.get("/", async (req, res) => {
     });
   }
 });
-
+// SuperTokens middleware
+app.use(middleware());
+// Routes
+app.use("/api/v1", router);
 // Handle 404 routes
 app.use(notFound);
 
