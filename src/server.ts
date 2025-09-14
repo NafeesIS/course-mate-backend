@@ -8,7 +8,10 @@ let server: Server;
 async function main() {
   try {
     // Connect to the database
-    await mongoose.connect(config.database_url as string);
+    await mongoose.connect(config.database_url as string, {
+      socketTimeoutMS: 30000, // Increase timeout to 30 seconds
+      connectTimeoutMS: 30000, // Increase connection timeout
+    });
     console.log("✅ Connected to the database");
 
     // Start the application server
