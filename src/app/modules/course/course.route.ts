@@ -12,9 +12,13 @@ import {
 } from "./course.controller";
 import validateRequest from "../../middlewares/validateRequest";
 import { CourseValidation } from "./course.validation";
-import { upload } from "../../utils/googleDriveUpload";
+import multer from "multer";
+// import { upload } from "../../utils/googleDriveUpload";
 
 const router = Router();
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // 1 MB
+});
 
 // Public Course Routes (no authentication required)
 router.get("/", getAllCourses); // Get all courses (with optional user context)
@@ -30,7 +34,7 @@ router.post(
 );
 
 router.patch(
-  "/:id",
+  "/update/:id",
   verifySession(),
   upload.single('thumbnail'),
   validateRequest(CourseValidation.updateCourseValidationSchema),
