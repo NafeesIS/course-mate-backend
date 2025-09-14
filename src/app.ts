@@ -45,34 +45,28 @@ app.use(middleware());
 app.use("/api/v1", router);
 
 // Health check endpoint
-app.get('/', async (req, res) => {
+app.get("/", async (req, res) => {
   try {
-    // Ensure MongoDB connection is established before attempting to ping
-    if (mongoose.connection.readyState === 1) { // 1 means connected
-      await mongoose.connection.db.admin().ping(); // Ping MongoDB
-      res.status(200).json({
-        success: true,
-        message: `Course Mate API is running successfully and the database is connected!${config.database_url}`,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: `API is running, but MongoDB is not connected ${config.database_url}`,
-        timestamp: new Date().toISOString()
-      });
-    }
+    // Check if MongoDB is connected
+   await mongoose.connect(config.database_url as string);
+
+    // Respond with success message if both API and database are up
+    res.status(200).json({
+      success: true,
+      message: `Course Mate API is running successfully and the database is connected!${config.database_url}`,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     // Respond with error if database connection fails
     res.status(500).json({
       success: false,
-      message: 'API is running, but there is an issue with the database connection',
+      message:
+        `API is running, but there is an issue with the database connection ${config.database_url}`,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
-
 
 // Handle 404 routes
 app.use(notFound);
