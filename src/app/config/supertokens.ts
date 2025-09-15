@@ -18,7 +18,7 @@ supertokens.init({
     appName: "Course Mate",
     apiDomain: config.apiDomain,
     websiteDomain: config.websiteDomain,
-    apiBasePath: "api/v1/auth",
+    apiBasePath: "/api/v1/auth",
     websiteBasePath: "/auth",
   },
   recipeList: [
