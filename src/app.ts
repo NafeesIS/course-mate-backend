@@ -38,25 +38,25 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // Health check endpoint
 app.get("/", async (req, res) => {
   try {
-    // Check if MongoDB is connected
-    await mongoose.connect(config.database_url as string);
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(config.database_url as string);
+    }
 
-    // Respond with success message if both API and database are up
     res.status(200).json({
       success: true,
-      message: `Course Mate API is running successfully and the database is connected!${config.database_url}`,
+      message: "Course Mate API is running successfully and the database is connected!",
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    // Respond with error if database connection fails
+  } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: `API is running, but there is an issue with the database connection ${config.database_url}`,
+      message: "API is running, but there is an issue with the database connection",
       error: error.message,
       timestamp: new Date().toISOString(),
     });
   }
 });
+
 // Static file serving for uploads
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // SuperTokens middleware
