@@ -114,7 +114,7 @@ supertokens.init({
     }),
     
     Session.init({
-      cookieSecure: config.NODE_ENV === 'production',
+      cookieSecure: true,
     }),
   ],
 });
