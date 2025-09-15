@@ -5,7 +5,7 @@ import { createUser, getMe, updateProfile, getAllUsers } from "./auth.controller
 const router = Router();
 
 // Protected routes
-router.get("/me", getMe);
+router.get("/me", verifySession(), getMe);
 router.patch("/me", verifySession(), updateProfile);
 router.get("/users", verifySession(), getAllUsers);
 
