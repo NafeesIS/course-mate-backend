@@ -1,73 +1,108 @@
+// src/server.ts
+
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import path from "path";
+import { Server } from "http";
+import mongoose from "mongoose";
+import * as supertokens from "supertokens-node";
 import {
   middleware,
   errorHandler as supertokensErrorHandler,
 } from "supertokens-node/framework/express";
-import * as supertokens from "supertokens-node";
-import "./app/config/supertokens";
+
+import config from "./app/config";
+import "./app/config/supertokens"; // SuperTokens initialization
 import router from "./app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandlers";
 import notFound from "./app/middlewares/notFound";
-import mongoose from "mongoose";
-import config from "./app/config";
-import { Server } from "http";
+
 const app: Application = express();
+let server: Server;
 
-// CORS configuration
+/**
+ * -----------------------------
+ * Middleware
+ * -----------------------------
+ */
 
+// CORS
 app.use(
   cors({
     origin: [
-      "http://localhost:3000", // for local dev
-      "https://course-mate-frontend.vercel.app", // your production frontend
+      "http://localhost:3000", // Local dev
+      "https://course-mate-frontend.vercel.app", // Production frontend
     ],
     allowedHeaders: [
       "content-type",
-      ...supertokens.getAllCORSHeaders(), // required by SuperTokens
+      ...supertokens.getAllCORSHeaders(), // Required by SuperTokens
     ],
-    credentials: true, // allow cookies/headers for auth
+    credentials: true,
   })
 );
 
-//parsers
+// Parsers
 app.use(express.json());
 
-// Health check endpoint
-const healthCheck = (req: Request, res: Response) => {
-  res.status(200).send({
+/**
+ * -----------------------------
+ * Health Check
+ * -----------------------------
+ */
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json({
     success: true,
-    message: "Application is up and running.",
+    message: "✅ Application is up and running",
   });
-};
-app.get("/", healthCheck);
-// Static file serving for uploads
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-// SuperTokens middleware
-app.use(middleware());
-// Routes
-app.use("/api/v1", router);
-// Handle 404 routes
-app.use(notFound);
+});
 
-// Error handling
+/**
+ * -----------------------------
+ * Static Files
+ * -----------------------------
+ */
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
+/**
+ * -----------------------------
+ * SuperTokens
+ * -----------------------------
+ */
+app.use(middleware());
+
+/**
+ * -----------------------------
+ * Routes
+ * -----------------------------
+ */
+app.use("/api/v1", router);
+
+/**
+ * -----------------------------
+ * Error Handling
+ * -----------------------------
+ */
+app.use(notFound);
 app.use(supertokensErrorHandler());
 app.use(globalErrorHandler);
 
-let server: Server;
-
-async function main() {
+/**
+ * -----------------------------
+ * Database & Server Init
+ * -----------------------------
+ */
+async function startServer() {
   try {
     await mongoose.connect(config.database_url as string, {
-      serverSelectionTimeoutMS: 30000, // Increase timeout
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       family: 4, // Force IPv4
     });
-    console.log("✅ Connected to the database");
+
+    console.log("✅ Connected to MongoDB");
 
     server = app.listen(config.port, () => {
-      console.log(`🚀 Course Mate server listening on port ${config.port}`);
+      console.log(`🚀 Course Mate server running on port ${config.port}`);
     });
   } catch (err) {
     console.error("❌ DB connection error", err);
@@ -75,15 +110,22 @@ async function main() {
   }
 }
 
-main();
+startServer();
 
-// Graceful shutdown
+/**
+ * -----------------------------
+ * Graceful Shutdown
+ * -----------------------------
+ */
 process.on("unhandledRejection", (err) => {
   console.error("😈 Unhandled rejection", err);
-  server?.close(() => process.exit(1));
+  if (server) server.close(() => process.exit(1));
+  else process.exit(1);
 });
 
 process.on("uncaughtException", (err) => {
   console.error("😈 Uncaught exception", err);
   process.exit(1);
 });
+
+export default app;
