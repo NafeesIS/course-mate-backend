@@ -7,7 +7,11 @@ let server: Server;
 
 async function main() {
   try {
-    await mongoose.connect(config.database_url as string);
+    await mongoose.connect(config.database_url as string, {
+      serverSelectionTimeoutMS: 30000, // Increase timeout
+      socketTimeoutMS: 45000,
+      family: 4, // Force IPv4
+    });
     console.log("✅ Connected to the database");
 
     server = app.listen(config.port, () => {
