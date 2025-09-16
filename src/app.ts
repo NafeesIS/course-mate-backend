@@ -44,14 +44,14 @@ app.get("/", async (req, res) => {
     // Respond with success message if both API and database are up
     res.status(200).json({
       success: true,
-      message: `Course Mate API is running successfully and the database is connected!${config.database_url}`,
+      message: `Course Mate API is running successfully and the database is connected!`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     // Respond with error if database connection fails
     res.status(500).json({
       success: false,
-      message: `API is running, but there is an issue with the database connection ${config.database_url}`,
+      message: `API is running, but there is an issue with the database connection`,
       error: error.message,
       timestamp: new Date().toISOString(),
     });
